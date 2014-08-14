@@ -20,7 +20,13 @@ var ircClient = function(config) {
     if(to === self.name) {
         console.log('Got private message from %s: %s', from, message);
     }
-    
+
+  });
+
+  self.client.addListener('kick', function(channel, who, by, reason) {
+    if(who === self.name) {
+      console.log('Kicked from %s by %s: %s', channel, by, reason);
+    }
   });
 };
 
