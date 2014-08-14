@@ -35,10 +35,10 @@ var init = function() {
 };
 
 var loadPlugins = function(pluginDir) {
-  var fullPluginDir = __dirname + '/' + pluginDir;
+  var fullPluginDir = __dirname + '/fff' + pluginDir;
 
   fs.readdir(fullPluginDir, function(err, plugins) {
-    if(err) console.log('error reading plugin dir:', err);
+    if(err) return console.log('error reading plugin dir:', err);
 
     plugins.forEach(function(pluginFile) {
       var pluginProcess = cp.fork(fullPluginDir + pluginFile);
@@ -60,3 +60,5 @@ var loadPlugins = function(pluginDir) {
 };
 
 init();
+
+
