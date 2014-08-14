@@ -5,7 +5,7 @@ var jshint = require('gulp-jshint');
 // var mocha = require('gulp-mocha');
 var nodemon = require('gulp-nodemon');
 
-gulp.task('default', ['hint']);
+gulp.task('default', ['lint']);
 
 gulp.task('lint', function() {
   return gulp.src('src/*.js')
