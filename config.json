@@ -1,0 +1,6 @@
+{
+    "botName": "lovebot",
+    "pluginDir": "./plugins/",
+    "botNetwork": "irc.synirc.net",
+    "joinChannels": ["#bottest"]
+}
