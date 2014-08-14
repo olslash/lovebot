@@ -1,0 +1,21 @@
+{
+  "name": "lovebot",
+  "version": "0.0.1",
+  "description": "another irc bot.",
+  "main": "core.js",
+  "dependencies": {
+    "bluebird": "^2.2.2",
+    "irc": "^0.3.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "jshintConfig": {
+    "strict": true,
+    "esnext": true,
+    "node": true
+  },
+  "author": "Mitch Robb",
+  "license": "ISC"
+}
