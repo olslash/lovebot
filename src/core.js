@@ -31,8 +31,6 @@ var init = function() {
     });
 
     loadPlugins(config.pluginDir);
-    // TODO: fix this error handling-- split it up? we get to this catch if any
-    // module failes loading.
   });
 };
 
