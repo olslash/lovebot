@@ -43,22 +43,39 @@ var loadPlugins = function(pluginDir) {
     plugins.forEach(function(pluginFile) {
       var pluginProcess = cp.fork(fullPluginDir + pluginFile);
 
+
+      var listener = pluginProcess.on('message', function(message) {
+        console.log(message);
+      });
+
       loadedModules[pluginFile] = {
         process: pluginProcess,
         timeLoaded: new Date(),
         pid: pluginProcess.pid,
         state: 'running',
         routes: {},
-        registeredCommands: {}
+        registeredCommands: {},
+        listener: listener
       };
-
-      pluginProcess.on('message', function(message) {
-        // pass message on to router
-      });
     });
   });
 };
 
+
+var registerPlugin = function() {
+
+};
+
+var unloadPlugin = function() {
+  // remove listener
+  // un register commands
+  // remove routes
+  // clear from loadedmodules
+};
+
+
 init();
 
 
+// todo:
+// fail more gracefully on config file and plugin dir errors.
