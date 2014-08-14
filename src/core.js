@@ -20,7 +20,7 @@ var init = function() {
   // Read config and instantiate irc client and router
   fs.readFile(path.join(__dirname, '..', 'config.json'), 'utf8',
     function(err, data) {
-      if (err) console.log('error loading config file:', err);
+      if (err) return console.error('error loading config file:', err);
 
       var config = JSON.parse(data);
 
@@ -34,7 +34,7 @@ var init = function() {
       // read plugin dir and load each plugin
       var fullPluginDir = path.join(__dirname, config.pluginDir);
       fs.readdir(fullPluginDir, function(err, plugins) {
-        if (err) return console.log('error reading plugin dir:', err);
+        if (err) return console.error('error reading plugin dir:', err);
 
         plugins.forEach(function(pluginFile) {
           loadPlugin(fullPluginDir, pluginFile);
