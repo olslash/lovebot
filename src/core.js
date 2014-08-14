@@ -48,7 +48,8 @@ var loadPlugins = function(pluginDir) {
         timeLoaded: new Date(),
         pid: pluginProcess.pid,
         state: 'running',
-        routes: {}
+        routes: {},
+        registeredCommands: {}
       };
 
       pluginProcess.on('message', function(message) {
