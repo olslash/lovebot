@@ -19,51 +19,45 @@ var loadedModules = {};
 var init = function() {
   // Read config and instantiate irc client and router
   fs.readFile(__dirname + "/../config.json", "utf8", function(err, data) {
-    if(err) console.log('error loading config file:', err);
+    if (err) console.log('error loading config file:', err);
 
     var config = JSON.parse(data);
+    
     r = new Router();
-
     irc = new Client({
       name: config.botName,
       network: config.botNetwork,
       channels: config.joinChannels
     });
 
-    loadPlugins(config.pluginDir);
-  });
-};
+    // read plugin dir and load each plugin
+    var fullPluginDir = __dirname + '/' + config.pluginDir + '/';
+    fs.readdir(fullPluginDir, function(err, plugins) {
+      if (err) return console.log('error reading plugin dir:', err);
 
-var loadPlugins = function(pluginDir) {
-  var fullPluginDir = __dirname + '/' + pluginDir;
-
-  fs.readdir(fullPluginDir, function(err, plugins) {
-    if(err) return console.log('error reading plugin dir:', err);
-
-    plugins.forEach(function(pluginFile) {
-      var pluginProcess = cp.fork(fullPluginDir + pluginFile);
-
-
-      var listener = pluginProcess.on('message', function(message) {
-        console.log(message);
+      plugins.forEach(function(pluginFile) {
+        loadPlugin(fullPluginDir, pluginFile);
       });
-
-      loadedModules[pluginFile] = {
-        process: pluginProcess,
-        timeLoaded: new Date(),
-        pid: pluginProcess.pid,
-        state: 'running',
-        routes: {},
-        registeredCommands: {},
-        listener: listener
-      };
     });
   });
 };
 
+var loadPlugin = function(dir, pluginFile) {
+  var pluginProcess = cp.fork(dir + pluginFile);
 
-var registerPlugin = function() {
+  var listener = pluginProcess.on('message', function(message) {
+    console.log(message);
+  });
 
+  loadedModules[pluginFile] = {
+    process: pluginProcess,
+    timeLoaded: new Date(),
+    pid: pluginProcess.pid,
+    state: 'running',
+    routes: {},
+    registeredCommands: {},
+    listener: listener
+  };
 };
 
 var unloadPlugin = function() {
