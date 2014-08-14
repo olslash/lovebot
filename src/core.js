@@ -46,9 +46,7 @@ var init = function() {
 var loadPlugin = function(dir, pluginFile) {
   var pluginProcess = cp.fork(dir + pluginFile);
 
-  var listener = pluginProcess.on('message', function(message) {
-    console.log(message);
-  });
+  var listener = addPluginListener(pluginProcess);
 
   loadedModules[pluginFile] = {
     process: pluginProcess,
@@ -59,6 +57,17 @@ var loadPlugin = function(dir, pluginFile) {
     registeredCommands: {},
     listener: listener
   };
+
+  function addPluginListener(process) {
+    var listener = process.on('message', function(message) {
+      console.log('message from plugin:', message);
+      if (message.register !== undefined) {
+        // core handles registration request
+      } else {
+        // pass message directly to core.
+      }
+    });
+  }
 };
 
 var unloadPlugin = function() {
