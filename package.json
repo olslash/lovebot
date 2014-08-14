@@ -19,11 +19,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "jshintConfig": {
-    "strict": true,
-    "esnext": true,
-    "node": true
-  },
   "author": "Mitch Robb",
   "license": "ISC"
 }
