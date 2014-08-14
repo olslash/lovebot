@@ -8,8 +8,9 @@ var nodemon = require('gulp-nodemon');
 gulp.task('default', ['lint']);
 
 gulp.task('lint', function() {
-  return gulp.src('src/*.js')
-    .pipe(jshint('.jshintrc'));
+  return gulp.src('./src/*.js')
+    .pipe(jshint('.jshintrc'))
+    .pipe(jshint.reporter('jshint-stylish'));;
 });
 
 gulp.task('run', function() {
