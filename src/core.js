@@ -35,7 +35,7 @@ var init = function() {
 };
 
 var loadPlugins = function(pluginDir) {
-  var fullPluginDir = __dirname + '/fff' + pluginDir;
+  var fullPluginDir = __dirname + '/' + pluginDir;
 
   fs.readdir(fullPluginDir, function(err, plugins) {
     if(err) return console.log('error reading plugin dir:', err);
