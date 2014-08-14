@@ -2,12 +2,9 @@
 var irc = require('irc');
 
 var ircClient = function(config) {
-  
+  this.client = new irc.Client(config.network, config.name, {
+    channels: config.channels
+  });  
 };
-
-// var client = new irc.Client({
-//     connection: { host: "localhost", port: 6667 },
-//     identity: { nickname: "EchoClient" }
-// });
 
 module.exports = ircClient;

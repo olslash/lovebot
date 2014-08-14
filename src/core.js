@@ -19,15 +19,16 @@ var init = function() {
     r = new Router();
 
     irc = new Client({
-      name: config.botname,
+      name: config.botName,
       network: config.botNetwork,
       channels: config.joinChannels
     });
 
     loadPlugins(config.pluginDir);
-
+    // TODO: fix this error handling-- split it up? we get to this catch if any
+    // module failes loading.
   }).catch(function(err) {
-    console.error('Unable to read config file:', err.message);
+    console.error('Init error:', err);
   });
 };
 
