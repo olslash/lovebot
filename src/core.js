@@ -18,28 +18,29 @@ var loadedModules = {};
 
 var init = function() {
   // Read config and instantiate irc client and router
-  fs.readFile(__dirname + "/../config.json", "utf8", function(err, data) {
-    if (err) console.log('error loading config file:', err);
+  fs.readFile(path.join(__dirname, '..', 'config.json'), 'utf8',
+    function(err, data) {
+      if (err) console.log('error loading config file:', err);
 
-    var config = JSON.parse(data);
-    
-    r = new Router();
-    irc = new Client({
-      name: config.botName,
-      network: config.botNetwork,
-      channels: config.joinChannels
-    });
+      var config = JSON.parse(data);
 
-    // read plugin dir and load each plugin
-    var fullPluginDir = path.join(__dirname, config.pluginDir);
-    fs.readdir(fullPluginDir, function(err, plugins) {
-      if (err) return console.log('error reading plugin dir:', err);
+      r = new Router();
+      irc = new Client({
+        name: config.botName,
+        network: config.botNetwork,
+        channels: config.joinChannels
+      });
 
-      plugins.forEach(function(pluginFile) {
-        loadPlugin(fullPluginDir, pluginFile);
+      // read plugin dir and load each plugin
+      var fullPluginDir = path.join(__dirname, config.pluginDir);
+      fs.readdir(fullPluginDir, function(err, plugins) {
+        if (err) return console.log('error reading plugin dir:', err);
+
+        plugins.forEach(function(pluginFile) {
+          loadPlugin(fullPluginDir, pluginFile);
+        });
       });
     });
-  });
 };
 
 var loadPlugin = function(dir, pluginFile) {
