@@ -25,10 +25,15 @@ var init = function() {
       var config = JSON.parse(data);
 
       r = new Router();
+
       irc = new Client({
         name: config.botName,
         network: config.botNetwork,
         channels: config.joinChannels
+      });
+
+      irc.on('message', function(from, to, message) {
+        console.log('message event from client:', from, to, message);
       });
 
       // read plugin dir and load each plugin
@@ -76,7 +81,6 @@ var unloadPlugin = function() {
   // remove routes
   // clear from loadedmodules
 };
-
 
 init();
 
