@@ -1,9 +1,9 @@
 'use strict';
 
 var Prom = require('bluebird'); // "Prom" avoids conflict with es6 promises
-var fs = require('fs');
-var cp = require('child_process');
-
+var fs   = require('fs');
+var cp   = require('child_process');
+var path = require('path');
 // var readFile = Prom.promisify(fs.readFile);
 // var readDir = Prom.promisify(fs.readdir);
 
@@ -31,7 +31,7 @@ var init = function() {
     });
 
     // read plugin dir and load each plugin
-    var fullPluginDir = __dirname + '/' + config.pluginDir + '/';
+    var fullPluginDir = path.join(__dirname, config.pluginDir);
     fs.readdir(fullPluginDir, function(err, plugins) {
       if (err) return console.log('error reading plugin dir:', err);
 
