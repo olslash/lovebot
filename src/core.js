@@ -36,7 +36,7 @@ var init = function() {
       irc.on('message', function(from, to, message) {
         // check message for command prefix and pass to router if it has one
         if(config.commandPrefixes.indexOf(message[0]) !== -1)
-          r.routeIncoming(from, to, message);
+          r.routeIncoming(from, to, message.substring(1));
       });
 
       // read plugin dir and load each plugin
