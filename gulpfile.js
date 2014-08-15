@@ -18,7 +18,7 @@ gulp.task('run', function() {
   ext: 'html js', 
   ignore: [''],
   env: { 'NODE_ENV': 'development' } , 
-  nodeArgs: ['--harmony', '--debug']})
+  nodeArgs: ['--harmony']})
     .on('change', ['lint'])
     .on('restart', function () {
       console.log('Nodemon restarted.');
