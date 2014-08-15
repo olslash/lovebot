@@ -15,6 +15,7 @@ var r;
 var irc;
 
 var loadedModules = {};
+// var allRegisteredCommands = {};
 
 var init = function() {
   // Read config and instantiate irc client and router
@@ -33,7 +34,9 @@ var init = function() {
       });
 
       irc.on('message', function(from, to, message) {
-        console.log('message event from client:', from, to, message);
+        // check message for command prefix and pass to router if it has one
+        if(config.commandPrefixes.indexOf(message[0]) !== -1)
+          r.routeIncoming(from, to, message);
       });
 
       // read plugin dir and load each plugin
@@ -59,20 +62,21 @@ var loadPlugin = function(dir, pluginFile) {
     pid: pluginProcess.pid,
     state: 'running',
     routes: {},
-    registeredCommands: {},
+    // registeredCommands: {},
     listener: listener
   };
 
   function addPluginListener(process) {
     var listener = process.on('message', function(message) {
-      console.log('message from plugin:', message);
       if (message.register !== undefined) {
-        // core handles registration request
+        r.register(message);
       } else {
-        // pass message directly to core.
+        r.routeOutgoing(message);
       }
     });
-  }
+
+    return listener;
+  } 
 };
 
 var unloadPlugin = function() {
@@ -87,3 +91,4 @@ init();
 
 // todo:
 // fail more gracefully on config file and plugin dir errors.
+// be more strict about malformed messages/exploits from plugins?
