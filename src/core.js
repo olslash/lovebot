@@ -54,7 +54,13 @@ var init = function() {
 var loadPlugin = function(dir, pluginFile) {
   var pluginProcess = cp.fork(dir + pluginFile);
 
-  var listener = addPluginListener(pluginProcess);
+  var listener = process.on('message', function(message) {
+    if (message.register !== undefined) {
+      r.register(message);
+    } else {
+      r.routeOutgoing(message);
+    }
+  });
 
   loadedModules[pluginFile] = {
     process: pluginProcess,
@@ -65,18 +71,6 @@ var loadPlugin = function(dir, pluginFile) {
     // registeredCommands: {},
     listener: listener
   };
-
-  function addPluginListener(process) {
-    var listener = process.on('message', function(message) {
-      if (message.register !== undefined) {
-        r.register(message);
-      } else {
-        r.routeOutgoing(message);
-      }
-    });
-
-    return listener;
-  } 
 };
 
 var unloadPlugin = function() {
