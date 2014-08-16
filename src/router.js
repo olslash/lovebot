@@ -103,29 +103,26 @@ Router.prototype._handlePluginRegistration = function(filename,
 
     if(allCommandsAvailable) {
       console.log(filename, 'is registering commands', requestedCommands);
-      self._addRoute(filename, requestedCommands);
+      requestedCommands.forEach(function(command) {
+        self._addRoute(filename, command);
+      });
+
     } else {
       console.log('Rejected: one or more commands is already registered',
         requestedCommands);
     }
 };
 
-Router.prototype._addRoute = function(filename, commands) {
+Router.prototype._addRoute = function(filename, commandName) {
   var self = this;
-  commands.forEach(function(commandName) {
-    // incoming route
-    self.routes[commandName] = {
-      send: function(routingObject) {
-        self.plugins[filename].process.send(routingObject);
-      }
-    };
+  // incoming route
+  self.routes[commandName] = {
+    send: function(routingObject) {
+      self.plugins[filename].process.send(routingObject);
+    }
+  };
 
-    // outgoing route
-
-  });
-
-  
-
+  // outgoing route
 
 };
 
