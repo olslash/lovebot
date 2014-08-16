@@ -22,12 +22,13 @@ Router.prototype.routeIncoming = function(from, to, message) {
   var text = splitMessage[2];
 
   // todo: check if the command actually exists
+  if(!self.routes.hasOwnProperty(command)) return;
 
   // @ prefix to prevent collision with a real name
   var receiver = to === self.name ? '@PRIVATE' : to;
 
   crypto.pseudoRandomBytes(10, function(err, buff) {
-    if(err) return console.log('error creating message ID:', err);
+    if(err) return console.error('error creating message ID:', err);
     
     // message id is the tail 6 digits of a random md5 hash    
     var md5sum = crypto.createHash('md5');
@@ -80,14 +81,17 @@ Router.prototype.loadPlugin = function(filename, pluginProcess) {
 };
 
 Router.prototype.unloadPlugin = function(filename) {
+  // un-register all listeners for the plugin.
   var pluginListeners = this.plugins[filename].listeners;
 
   for(var listenerType in pluginListeners) {
     var handler = pluginListeners[listenerType];
     process.removeListener(listenerType, handler);
   }
-  
+
   delete this.plugins[filename];
+  // remove all routes associated with the plugin
+  // 
 };
 
 Router.prototype._handlePluginRegistration = function(filename, 
