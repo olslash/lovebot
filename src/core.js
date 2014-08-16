@@ -24,11 +24,14 @@ var init = function() {
       if (err) return console.error('error loading config file:', err);
 
       var config = JSON.parse(data);
+      var botName = config.botName;
 
-      r = new Router();
+      r = new Router({
+        name: botName
+      });
 
       irc = new Client({
-        name: config.botName,
+        name: botName,
         network: config.botNetwork,
         channels: config.joinChannels
       });
