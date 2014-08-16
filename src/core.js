@@ -54,23 +54,18 @@ var init = function() {
 var loadPlugin = function(dir, pluginFile) {
   var pluginProcess = cp.fork(dir + pluginFile);
 
-  var listener = process.on('message', function(message) {
-    if (message.register !== undefined) {
-      r.register(message);
-    } else {
-      r.routeOutgoing(message);
-    }
-  });
+  r.loadPlugin(pluginFile, pluginProcess);
 
+  // keep some data around on the plugin in case we want it later
   loadedModules[pluginFile] = {
     process: pluginProcess,
     timeLoaded: new Date(),
     pid: pluginProcess.pid,
     state: 'running',
-    routes: {},
+    // routes: {},
     // registeredCommands: {},
-    listener: listener
   };
+
 };
 
 var unloadPlugin = function() {
