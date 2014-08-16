@@ -61,10 +61,10 @@ Router.prototype.handleRegistration = function(filename, registrationMessage) {
     var allCommandsAvailable = requestedCommands.every(function(commandName) {
       return !self.allRegisteredCommands.hasOwnProperty(commandName);
     });
-    
+
+    // force unique plugin names
     if(allCommandsAvailable) {
       console.log('registering commands', requestedCommands);
-      // todo: module could try to register under multiple names. 
       this._addRoute(registrationMessage.modulename, requestedCommands);
     } else {
       console.log('Rejected: one or more commands is already registered',
@@ -73,7 +73,10 @@ Router.prototype.handleRegistration = function(filename, registrationMessage) {
 };
 
 Router.prototype._addRoute = function(moduleName, commands) {
-
+  var self = this;
+  commands.forEach(function(commandName) {
+    self.allRegisteredCommands[commandName] = true; 
+  });
 };
 
 module.exports = Router;
