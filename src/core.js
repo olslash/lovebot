@@ -4,15 +4,16 @@ var Prom = require('bluebird'); // "Prom" avoids conflict with es6 promises
 var fs   = require('fs');
 var cp   = require('child_process');
 var path = require('path');
+var clc = require('cli-color');
 
 var Router = require('./router');
 var Client = require('./client');
 
-
 var r;
 var irc;
-
 var loadedModules = {};
+
+var fullPluginDir;
 
 var init = function() {
   // Read config and instantiate irc client and router
@@ -22,6 +23,7 @@ var init = function() {
 
       var config = JSON.parse(data);
       var botName = config.botName;
+      fullPluginDir = path.join(__dirname, config.pluginDir);
 
       r = new Router({
         name: botName
@@ -47,7 +49,6 @@ var init = function() {
       });
 
       // read plugin dir and load each plugin
-      var fullPluginDir = path.join(__dirname, config.pluginDir);
       fs.readdir(fullPluginDir, function(err, plugins) {
         if (err) return console.error('error reading plugin dir:', err);
 
@@ -59,7 +60,18 @@ var init = function() {
 };
 
 var loadPlugin = function(dir, pluginFile) {
+  var self = this;
   var pluginProcess = cp.fork(dir + pluginFile);
+  
+  var handleProcessExit = function(filename, codeOrSignal) {
+    console.error(clc.red('!!!Plugin crashed:', filename));
+    unloadPlugin(filename);
+    loadPlugin(fullPluginDir, filename);
+  };
+
+  // todo: crashing plugins enter infinite loop of crash/reload. bad.
+  var processExitHandler = handleProcessExit.bind(null, pluginFile);
+  pluginProcess.on('exit', processExitHandler);
 
   r.loadPlugin(pluginFile, pluginProcess);
 
@@ -67,10 +79,9 @@ var loadPlugin = function(dir, pluginFile) {
   loadedModules[pluginFile] = {
     process: pluginProcess,
     timeLoaded: new Date(),
-    pid: pluginProcess.pid
-    // state: 'running'
+    pid: pluginProcess.pid,
+    exitHandler: processExitHandler
   };
-
 };
 
 var unloadPlugin = function(filename) {

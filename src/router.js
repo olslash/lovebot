@@ -91,14 +91,14 @@ Router.prototype.loadPlugin = function(filename, pluginProcess) {
   };
 
   // handlers from this plugin always come with the plugin's name attached.
-  var boundHandler = handleIncomingMessage.bind(null, filename);
-  pluginProcess.on('message', boundHandler);
-
+  var incomingMessageHandler = handleIncomingMessage.bind(null, filename);
+  pluginProcess.on('message', incomingMessageHandler);  
+  
   // we have to keep the event type and the handler around in order to 
   // deregister later. 
   self.routing.plugins[filename] = {
     listeners: {
-      message: boundHandler
+      message: incomingMessageHandler
     },
     process: pluginProcess
   };

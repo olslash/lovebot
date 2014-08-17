@@ -5,6 +5,7 @@
   "main": "core.js",
   "dependencies": {
     "bluebird": "^2.2.2",
+    "cli-color": "^0.3.2",
     "irc": "^0.3.7"
   },
   "devDependencies": {
