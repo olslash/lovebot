@@ -101,5 +101,55 @@ describe('Core', function() {
         botCore.__get__('init')();
         loadedPlugins.should.include('test1.js', 'test2.js', 'test3.js');
     });
+
+    it('should pass messages from irc to router, when recieved with a ' + 
+    'registered prefix', function() {
+      var fsMock = {
+        readdir: function(path, cb) {
+          cb(null, []);
+        }, 
+        readFile: function(path, encoding, cb) {
+          cb(null, fakeConfigJSON);
+        }
+      };
+      var routeIncomingCall = [];
+      var FakeRouter = function() {};
+      FakeRouter.prototype.on = function() {};
+      FakeRouter.prototype.routeIncoming = function(from, to, message) {
+        routeIncomingCall = [from, to, message];
+      };
+
+      var FakeClient = function() {};
+
+      revert = botCore.__set__({
+        fs: fsMock,
+        Router: FakeRouter
+      });
+
+      // test registered prefixes
+      var commandPrefixes = JSON.parse(fakeConfigJSON).commandPrefixes;
+      for(var i = 0; i < commandPrefixes.length; i++) {
+        FakeClient.prototype.on = function(trigger, cb) {
+          cb('ol', '#testchan1', commandPrefixes[i] + 'is a real prefix');
+        };
+        botCore.__set__('Client', FakeClient);
+        botCore.__get__('init')();
+        routeIncomingCall.should.eql(['ol', '#testchan1', 'is a real prefix']);
+        routeIncomingCall = [];
+      }
+      
+      // should ignore unregistered prefixes
+      FakeClient.prototype.on = function(trigger, cb) {
+        cb('ol', '#testchan1', '^is not a real prefix');
+      };
+      botCore.__set__('Client', FakeClient);
+      botCore.__get__('init')();
+      routeIncomingCall.should.eql([]);
+    });
+
+    it('should pass messages from router to irc', function() {
+      
+
+    });
   });
 });
