@@ -82,6 +82,8 @@ var unloadPlugin = function(filename) {
   // remove routes
   // clear from loadedmodules
   r.unloadPlugin(filename);
+  loadedModules[filename].process.kill();
+  
   delete loadedModules[filename];
 };
 
