@@ -23,7 +23,7 @@ describe('Core', function() {
   beforeEach(function() {
     botCore.__set__('__dirname', 'test/src/');
 
-    // make sure the actual router and client aren't ever instanciated
+    // make sure the actual router and client aren't ever instantiated
     botCore.__set__('Router', function() {
       this.on = function() {};
     });
@@ -39,7 +39,7 @@ describe('Core', function() {
   });
 
   describe('init', function() {
-    xit('should read the config file and instanciate a router and client with' +
+    it('should read the config file and instanciate a router and client with' +
       'the correct parameters', function() {
         var botName, botNetwork, botChannels;
 
@@ -89,7 +89,7 @@ describe('Core', function() {
           }
         };
 
-        botCore.__set__({
+        revert = botCore.__set__({
           fs: fsMock,
           // cp: cpMock,
           loadPlugin: function(dir, pluginFile) {
