@@ -4,7 +4,7 @@ var gulp = require('gulp');
 // var gutil = require('gulp-util');
 // var coveralls = require('gulp-coveralls');
 var jshint = require('gulp-jshint');
-// var mocha = require('gulp-mocha');
+var mocha = require('gulp-mocha');
 var nodemon = require('gulp-nodemon');
 
 gulp.task('default', ['lint']);
@@ -25,4 +25,14 @@ gulp.task('run', function() {
     .on('restart', function () {
       console.log('Nodemon restarted.');
     });
+});
+
+gulp.task('test', function() {
+  return gulp.src(['test/test-*.js'], { read: false })
+  .pipe(mocha({
+    reporter: 'spec',
+    globals: {
+
+    }
+  }));
 });

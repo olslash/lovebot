@@ -20,7 +20,6 @@ var init = function() {
   fs.readFile(path.join(__dirname, '..', 'config.json'), 'utf8',
     function(err, data) {
       if (err) return console.error('error loading config file:', err);
-
       var config = JSON.parse(data);
       var botName = config.botName;
       fullPluginDir = path.join(__dirname, config.pluginDir);
@@ -35,7 +34,7 @@ var init = function() {
         channels: config.joinChannels
       });
 
-      // incoming messages from IR
+      // incoming messages from IRC
       irc.on('message', function(from, to, message) {
         // check message for command prefix and pass to router if it has one
         if(config.commandPrefixes.indexOf(message[0]) !== -1)
@@ -51,7 +50,6 @@ var init = function() {
       // read plugin dir and load each plugin
       fs.readdir(fullPluginDir, function(err, plugins) {
         if (err) return console.error('error reading plugin dir:', err);
-
         plugins.forEach(function(pluginFile) {
           loadPlugin(fullPluginDir, pluginFile);
         });
@@ -95,7 +93,8 @@ var unloadPlugin = function(filename) {
   delete loadedModules[filename];
 };
 
-init();
+
+if(process.env.NODE_ENV !== 'test') { init(); } 
 
 // todo:
 // fail more gracefully on config file and plugin dir errors.

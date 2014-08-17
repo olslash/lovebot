@@ -9,6 +9,7 @@
     "irc": "^0.3.7"
   },
   "devDependencies": {
+    "chai": "^1.9.1",
     "coveralls": "^2.11.1",
     "gulp": "^3.8.7",
     "gulp-coveralls": "^0.1.2",
@@ -16,7 +17,10 @@
     "gulp-mocha": "^0.5.2",
     "gulp-nodemon": "^1.0.4",
     "gulp-util": "^3.0.0",
-    "jshint-stylish": "^0.4.0"
+    "install": "^0.1.7",
+    "jshint-stylish": "^0.4.0",
+    "rewire": "^2.1.0",
+    "sinon": "^1.10.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
