@@ -2,8 +2,6 @@
 var crypto  = require('crypto');
 var emitter = require('events').EventEmitter;
 var util    = require('util');
-// var EventEmitter = require('events').EventEmitter;
-// var routerEmitter = new EventEmitter();
 
 var Router = function(config) {
   this.name = config.name; // the bot's name on irc
@@ -97,7 +95,6 @@ Router.prototype.loadPlugin = function(filename, pluginProcess) {
 
   // we have to keep the event type and the handler around in order to 
   // deregister later. 
-  // self.plugins[filename] = {
   self.routing.plugins[filename] = {
     listeners: {
       message: boundHandler

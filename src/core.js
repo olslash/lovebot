@@ -4,8 +4,6 @@ var Prom = require('bluebird'); // "Prom" avoids conflict with es6 promises
 var fs   = require('fs');
 var cp   = require('child_process');
 var path = require('path');
-// var readFile = Prom.promisify(fs.readFile);
-// var readDir = Prom.promisify(fs.readdir);
 
 var Router = require('./router');
 var Client = require('./client');
@@ -15,7 +13,6 @@ var r;
 var irc;
 
 var loadedModules = {};
-// var allRegisteredCommands = {};
 
 var init = function() {
   // Read config and instantiate irc client and router
@@ -88,7 +85,6 @@ var unloadPlugin = function(filename) {
 };
 
 init();
-
 
 // todo:
 // fail more gracefully on config file and plugin dir errors.
