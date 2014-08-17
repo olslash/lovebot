@@ -36,10 +36,17 @@ var init = function() {
         channels: config.joinChannels
       });
 
+      // incoming messages from IR
       irc.on('message', function(from, to, message) {
         // check message for command prefix and pass to router if it has one
         if(config.commandPrefixes.indexOf(message[0]) !== -1)
           r.routeIncoming(from, to, message.substring(1));
+      });
+
+      // outgoing messages from plugins to a channel
+      r.on('message', function(to, message) {
+        // console.log('%s => %s: %s', from, to, message);
+        irc.sendToChannel(to, message);
       });
 
       // read plugin dir and load each plugin
@@ -63,19 +70,19 @@ var loadPlugin = function(dir, pluginFile) {
   loadedModules[pluginFile] = {
     process: pluginProcess,
     timeLoaded: new Date(),
-    pid: pluginProcess.pid,
-    state: 'running',
-    // routes: {},
-    // registeredCommands: {},
+    pid: pluginProcess.pid
+    // state: 'running'
   };
 
 };
 
-var unloadPlugin = function() {
+var unloadPlugin = function(filename) {
   // remove listener
   // un register commands
   // remove routes
   // clear from loadedmodules
+  r.unloadPlugin(filename);
+  delete loadedModules[filename];
 };
 
 init();

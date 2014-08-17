@@ -34,4 +34,9 @@ var IrcClient = function(config) {
 };
 
 util.inherits(IrcClient, emitter);
+
+IrcClient.prototype.sendToChannel = function(channel, message) {
+  this.client.say(channel, message);
+};
+
 module.exports = IrcClient;

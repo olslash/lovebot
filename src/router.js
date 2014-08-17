@@ -1,16 +1,25 @@
 'use strict';
-var crypto = require('crypto');
+var crypto  = require('crypto');
+var emitter = require('events').EventEmitter;
+var util    = require('util');
 // var EventEmitter = require('events').EventEmitter;
 // var routerEmitter = new EventEmitter();
 
 var Router = function(config) {
   this.name = config.name; // the bot's name on irc
-  this.plugins = {}; // relevant info on plugins-- their process object and
-                     // listeners, for message passing and cleanup on unload.
-  this.routes = {}; // a link between a registered command name and a child
-                    // process. Each route has a send() method that passes the
-                    // message to the appropriate plugin.
+  this.routing = {
+    plugins: {},  // relevant info on plugins-- their process object and
+                  // listeners, for message passing and cleanup on unload.
+
+    incomingRoutes: {},  // a link between a registered command name and a child
+                         // process. Each route has a send() method that passes
+                         // the message to the appropriate plugin.
+
+    messageIds: {}  // message reply Ids that have been sent to a plugin.
+  }; 
 };
+
+util.inherits(Router, emitter);
 
 Router.prototype.routeIncoming = function(from, to, message) {
   // handle messages incoming (channel -> router)
@@ -21,8 +30,8 @@ Router.prototype.routeIncoming = function(from, to, message) {
   var command = splitMessage[1];
   var text = splitMessage[2];
 
-  // todo: check if the command actually exists
-  if(!self.routes.hasOwnProperty(command)) return;
+  // check if the command actually exists
+  if(!self.routing.incomingRoutes.hasOwnProperty(command)) return;
 
   // @ prefix to prevent collision with a real name
   var receiver = to === self.name ? '@PRIVATE' : to;
@@ -33,11 +42,17 @@ Router.prototype.routeIncoming = function(from, to, message) {
     // message id is the tail 6 digits of a random md5 hash    
     var md5sum = crypto.createHash('md5');
     md5sum.update(buff);
-    var messageId = md5sum.digest('hex').slice(-6);
+    var messageId = md5sum.digest('hex').slice(-8);
+
+    self.routing.messageIds[messageId] = {
+      send: function(message) {
+        // send the message back to the core
+        self.emit('message', to, message);
+      }
+    };
 
     // send text to route defined by command
-
-    self.routes[command].send({
+    self.routing.incomingRoutes[command].send({
         command: command,
         messageText: text, 
         callerName: from,
@@ -47,10 +62,20 @@ Router.prototype.routeIncoming = function(from, to, message) {
   });
 };
 
-Router.prototype.routeOutgoing = function(filename, messageObject) {
+Router.prototype.routeOutgoing = function(filename, replyObject) {
   // handle messages outgoing (plugin -> channel)
-  // console.log('routeoutgoing from:', filename, messageObject);
+  // console.log('routeoutgoing from:', filename, replyObject);
 
+  // ignore if messageId or replyText params aren't sent with the plugin's reply.
+  if (!replyObject.hasOwnProperty('messageId') ||
+      !replyObject.hasOwnProperty('replyText') ||
+  // ignore if the messageId doesn't exist
+      !this.routing.messageIds.hasOwnProperty(replyObject.messageId)) {
+      return;
+  }
+
+  this.routing.messageIds[replyObject.messageId].send(replyObject.replyText);
+  delete this.routing.messageIds[replyObject.messageId];
 };
 
 Router.prototype.loadPlugin = function(filename, pluginProcess) {
@@ -72,7 +97,8 @@ Router.prototype.loadPlugin = function(filename, pluginProcess) {
 
   // we have to keep the event type and the handler around in order to 
   // deregister later. 
-  self.plugins[filename] = {
+  // self.plugins[filename] = {
+  self.routing.plugins[filename] = {
     listeners: {
       message: boundHandler
     },
@@ -80,18 +106,24 @@ Router.prototype.loadPlugin = function(filename, pluginProcess) {
   };
 };
 
+// todo: test this
 Router.prototype.unloadPlugin = function(filename) {
   // un-register all listeners for the plugin.
-  var pluginListeners = this.plugins[filename].listeners;
+  var pluginListeners = this.routing.plugins[filename].listeners;
 
   for(var listenerType in pluginListeners) {
     var handler = pluginListeners[listenerType];
     process.removeListener(listenerType, handler);
   }
-
-  delete this.plugins[filename];
-  // remove all routes associated with the plugin
-  // 
+  delete this.routing.plugins[filename];
+  
+  // remove all incomingRoutes associated with the plugin
+  for(var command in this.routing.incomingRoutes) {
+    var commandData = this.routing.incomingRoutes[command];
+    if(commandData.owner === filename) {
+      delete this.routing.incomingRoutes[command]; 
+    }
+  }
 };
 
 Router.prototype._handlePluginRegistration = function(filename, 
@@ -102,7 +134,7 @@ Router.prototype._handlePluginRegistration = function(filename,
 
     // check if any requested command name is already taken
     var allCommandsAvailable = requestedCommands.every(function(commandName) {
-      return !self.routes.hasOwnProperty(commandName);
+      return !self.routing.incomingRoutes.hasOwnProperty(commandName);
     });
 
     if(allCommandsAvailable) {
@@ -120,15 +152,17 @@ Router.prototype._handlePluginRegistration = function(filename,
 Router.prototype._addRoute = function(filename, commandName) {
   var self = this;
   // incoming route
-  self.routes[commandName] = {
+  self.routing.incomingRoutes[commandName] = {
     send: function(routingObject) {
-      self.plugins[filename].process.send(routingObject);
-    }
+      self.routing.plugins[filename].process.send(routingObject);
+    },
+    owner: filename
   };
-
+  
   // outgoing route
 
 };
+
 
 module.exports = Router;
 
