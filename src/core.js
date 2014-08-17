@@ -90,4 +90,3 @@ init();
 
 // todo:
 // fail more gracefully on config file and plugin dir errors.
-// be more strict about malformed messages/exploits from plugins?
