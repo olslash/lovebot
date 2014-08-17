@@ -1,16 +1,9 @@
 'use strict';
 
-process.send({message: 'hello from the weather plugin'});
+var api = require('../pluginAPI');
 
-process.send({
-  register: { 
-    // moduleName: 'weatherman',
-    commands: ['weather', 'we', 'wea'],
-    accessLevel: 3 // for future auth layer
-  }
-});
 
-process.send({message: 'hi'});
+api.register(['weather', 'we', 'wea']);
 
 process.on('message', function(message) {
   console.log('weather plugin recieved message', message);
