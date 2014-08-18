@@ -13,7 +13,7 @@ var r;
 var irc;
 var loadedModules = {};
 
-var fullPluginDir;
+var fullPluginDirPath;
 
 var init = function() {
   // Read config and instantiate irc client and router
@@ -22,7 +22,7 @@ var init = function() {
       if (err) return console.error('error loading config file:', err);
       var config = JSON.parse(data);
       var botName = config.botName;
-      fullPluginDir = path.join(__dirname, config.pluginDir);
+      fullPluginDirPath = path.join(__dirname, config.pluginDir);
 
       r = new Router({
         name: botName
@@ -48,23 +48,24 @@ var init = function() {
       });
 
       // read plugin dir and load each plugin
-      fs.readdir(fullPluginDir, function(err, plugins) {
+      fs.readdir(fullPluginDirPath, function(err, plugins) {
         if (err) return console.error('error reading plugin dir:', err);
         plugins.forEach(function(pluginFile) {
-          loadPlugin(fullPluginDir, pluginFile);
+          loadPlugin(fullPluginDirPath, pluginFile);
         });
       });
     });
 };
 
 var loadPlugin = function(dir, pluginFile) {
+  // todo: add a check to make sure the plugin isn't already loaded
   var self = this;
   var pluginProcess = cp.fork(dir + pluginFile);
   
   var handleProcessExit = function(filename, codeOrSignal) {
     console.error(clc.red('!!!Plugin crashed:', filename));
     unloadPlugin(filename);
-    loadPlugin(fullPluginDir, filename);
+    loadPlugin(fullPluginDirPath, filename);
   };
 
   // todo: crashing plugins enter infinite loop of crash/reload. bad.
