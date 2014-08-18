@@ -87,10 +87,15 @@ var unloadPlugin = function(filename) {
   // un register commands
   // remove routes
   // clear from loadedmodules
-  r.unloadPlugin(filename);
-  loadedModules[filename].process.kill();
   
-  delete loadedModules[filename];
+  r.unloadPlugin(filename);
+  if(loadedModules.hasOwnProperty(filename)) {
+    loadedModules[filename].process.kill();
+    delete loadedModules[filename];
+  } else {
+    console.error('error unloading plugin:', filename);
+  }
+  
 };
 
 

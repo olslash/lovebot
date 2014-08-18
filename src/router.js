@@ -1,4 +1,5 @@
 'use strict';
+
 var crypto  = require('crypto');
 var emitter = require('events').EventEmitter;
 var util    = require('util');
@@ -139,16 +140,17 @@ Router.prototype._addRoute = function(filename, commandName) {
   };
 };
 
-// todo: test this
 Router.prototype.unloadPlugin = function(filename) {
   // un-register all listeners for the plugin.
-  var pluginListeners = this.routing.plugins[filename].listeners;
+  if(this.routing.plugins.hasOwnProperty(filename)) {
+    var pluginListeners = this.routing.plugins[filename].listeners;
 
-  for(var listenerType in pluginListeners) {
-    var handler = pluginListeners[listenerType];
-    process.removeListener(listenerType, handler);
+    for(var listenerType in pluginListeners) {
+      var handler = pluginListeners[listenerType];
+      process.removeListener(listenerType, handler);
+    }
+    delete this.routing.plugins[filename];
   }
-  delete this.routing.plugins[filename];
   
   // remove all incomingRoutes associated with the plugin
   for(var command in this.routing.incomingRoutes) {
