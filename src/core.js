@@ -1,106 +1,159 @@
 'use strict';
-
-var Prom = require('bluebird'); // "Prom" avoids conflict with es6 promises
-var fs   = require('fs');
-var cp   = require('child_process');
+var Promise = require('bluebird');
+var fs      = require('fs');
 var path = require('path');
-var clc = require('cli-color');
 
-var Router = require('./router');
-var Client = require('./client');
+var readFile = Promise.promisify(fs.readFile);
+var readDir = Promise.promisify(fs.readdir);
 
-var r;
-var irc;
-var loadedModules = {};
+var Router  = require('./router');
+var Client  = require('./client');
+var Plugin  = require('./pluginClass');
 
-var fullPluginDirPath;
+var core = (function() {
+  var running = false;
+  var fullPluginDirPath;
+  var commandPrefixes;
 
-var init = function() {
-  // Read config and instantiate irc client and router
-  fs.readFile(path.join(__dirname, '..', 'config.json'), 'utf8',
-    function(err, data) {
-      if (err) return console.error('error loading config file:', err);
-      var config = JSON.parse(data);
-      var botName = config.botName;
+  var router;
+  var irc;
+
+  var allPlugins = {};
+
+  var init = function(configFile) {
+    console.log('init');
+    if(running) return;
+    running = true;
+    
+    readConfig(configFile)
+
+    .then(function(configJSON) {
+      var config = JSON.parse(configJSON);
+      // todo: verify everything that we expect is in the config file.
       fullPluginDirPath = path.join(__dirname, config.pluginDir);
+      commandPrefixes = config.commandPrefixes;
 
-      r = new Router({
-        name: botName
+      router = new Router({
+        name: config.botName
       });
 
       irc = new Client({
-        name: botName,
+        name: config.botName,
         network: config.botNetwork,
         channels: config.joinChannels
       });
 
-      // incoming messages from IRC
-      irc.on('message', function(from, to, message) {
-        // check message for command prefix and pass to router if it has one
-        if(config.commandPrefixes.indexOf(message[0]) !== -1)
-          r.routeIncoming(from, to, message.substring(1));
-      });
-
       // outgoing messages from plugins to a channel
-      r.on('message', function(to, message) {
-        // console.log('%s => %s: %s', from, to, message);
-        irc.sendToChannel(to, message);
-      });
+      router.on('message', handleRouterMessage);
+      // Incoming messages from irc
+      irc.on('message', handleIRCMessage);
+    })
 
-      // read plugin dir and load each plugin
-      fs.readdir(fullPluginDirPath, function(err, plugins) {
-        if (err) return console.error('error reading plugin dir:', err);
-        plugins.forEach(function(pluginFile) {
-          loadPlugin(fullPluginDirPath, pluginFile);
-        });
+    .then(function() {
+      return scanPluginDir();
+    })
+
+    .then(function(plugins) {
+      plugins.forEach(function(pluginFile) {
+        loadPlugin(pluginFile);
       });
+    })
+
+    .catch(function(err) {
+      console.log('OH CRAP', err);
     });
-};
-
-var loadPlugin = function(dir, pluginFile) {
-  // todo: add a check to make sure the plugin isn't already loaded
-  var self = this;
-  var pluginProcess = cp.fork(dir + pluginFile);
-  
-  var handleProcessExit = function(filename, codeOrSignal) {
-    console.error(clc.red('!!!Plugin crashed:', filename));
-    unloadPlugin(filename);
-    loadPlugin(fullPluginDirPath, filename);
   };
 
-  // todo: crashing plugins enter infinite loop of crash/reload. bad.
-  var processExitHandler = handleProcessExit.bind(null, pluginFile);
-  pluginProcess.on('exit', processExitHandler);
+  var loadPlugin = function(pluginFile) {
+    var plugin = new Plugin(fullPluginDirPath + pluginFile);
+    plugin.load();
+    
+    plugin.on('message', handlePluginMessage.bind(null, pluginFile));
+    plugin.on('register', handlePluginRegistration.bind(null, pluginFile));
+    plugin.on('exit', handlePluginExit.bind(null, pluginFile));
 
-  r.loadPlugin(pluginFile, pluginProcess);
+    allPlugins[pluginFile] = plugin;
 
-  // keep some data around on the plugin in case we want it later
-  loadedModules[pluginFile] = {
-    process: pluginProcess,
-    timeLoaded: new Date(),
-    pid: pluginProcess.pid,
-    exitHandler: processExitHandler
+    emitGlobal('loadedPlugin', {
+      filename: pluginFile,
+      timeLoaded:plugin.timeLoaded,
+      pid: plugin.pid
+    });
   };
-};
 
-var unloadPlugin = function(filename) {
-  // remove listener
-  // un register commands
-  // remove routes
-  // clear from loadedmodules
+  var unloadPlugin = function(pluginFile) {
+    if(allPlugins.hasOwnProperty(pluginFile)) {
+      allPlugins[pluginFile].unload();
+      delete allPlugins[pluginFile];
+    }
+
+    emitGlobal('unloadedPlugin', {
+      filename: pluginFile
+    });
+  };
+
+  var scanPluginDir = function() {
+    return readDir(fullPluginDirPath);
+  };
+
+// End exported commands ----------------------------------------------------
+
+  var readConfig = function(configFile) {
+    return readFile(configFile, 'utf8');
+  };
   
-  r.unloadPlugin(filename);
-  if(loadedModules.hasOwnProperty(filename)) {
-    loadedModules[filename].process.kill();
-    delete loadedModules[filename];
-  } else {
-    console.error('error unloading plugin:', filename);
-  }
-  
-};
+  var handleIRCMessage = function(from, to, message) {
+    emitGlobal('message', {
+      from: from,
+      to: to,
+      message: message
+    });
 
+    if(commandPrefixes.indexOf(message[0]) !== -1)
+      router.routeIncoming(from, to, message.substring(1));
+  };
 
-if(process.env.NODE_ENV !== 'test') { init(); } 
+  var handlePluginMessage = function(pluginFile, messageObject) {
+    console.log(messageObject);
+    // todo: pluginFile needed?
+    router.routeOutgoing(messageObject);
+  };
 
-// todo:
-// fail more gracefully on config file and plugin dir errors.
+  var handleRouterMessage = function(to, message) {
+    // console.log('%s => %s: %s', from, to, message);
+    emitGlobal('pluginReply', {
+      to: to,
+      message: message
+    });
+
+    irc.sendToChannel(to, message);
+  };
+
+  var handlePluginRegistration = function(pluginFile, requestedCommands, cb) {
+    // todo: if the router rejects the commands, we need to notify the plugin
+    console.log('registration:', pluginFile, requestedCommands);
+    router.register(pluginFile, requestedCommands);
+    // cb(...todo...);
+  };
+
+  var handlePluginExit = function(pluginFile, codeOrSignal) {
+    console.log('error: plugin', pluginFile, 'exited:', codeOrSignal);
+    router.unregister(pluginFile);
+  };
+
+  var emitGlobal = function(type, data) {
+    // for websocket/etc. adapter
+    process.emit(type, data);
+  };
+
+  return {
+    init: init,
+    scanPluginDir: scanPluginDir,
+    loadPlugin: loadPlugin,
+    unloadPlugin: unloadPlugin
+  };
+})();
+
+if(process.env.NODE_ENV !== 'test') {
+  core.init(path.join(__dirname, '..', 'config.json'));
+}
