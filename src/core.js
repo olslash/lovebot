@@ -60,16 +60,17 @@ var core = (function() {
     })
 
     .catch(function(err) {
+      // todo: handle. Is this called if a plugin crashes?
       console.log('OH CRAP', err);
     });
   };
 
   var loadPlugin = function(pluginFile) {
     var plugin = new Plugin(fullPluginDirPath + pluginFile);
-    plugin.load();
+    plugin.start();
     
     plugin.on('message', handlePluginMessage.bind(null, pluginFile));
-    plugin.on('register', handlePluginRegistration.bind(null, pluginFile));
+    plugin.on('register', handlePluginRegistration.bind(null, plugin));
     plugin.on('exit', handlePluginExit.bind(null, pluginFile));
 
     allPlugins[pluginFile] = plugin;
@@ -103,18 +104,19 @@ var core = (function() {
   };
   
   var handleIRCMessage = function(from, to, message) {
-    emitGlobal('message', {
-      from: from,
-      to: to,
-      message: message
-    });
+    if(commandPrefixes.indexOf(message[0]) !== -1) {
+      emitGlobal('message', {
+        from: from,
+        to: to,
+        message: message
+      });
 
-    if(commandPrefixes.indexOf(message[0]) !== -1)
       router.routeIncoming(from, to, message.substring(1));
+    }
   };
 
   var handlePluginMessage = function(pluginFile, messageObject) {
-    console.log(messageObject);
+    console.log('plugin replied', messageObject);
     // todo: pluginFile needed?
     router.routeOutgoing(messageObject);
   };
@@ -131,7 +133,7 @@ var core = (function() {
 
   var handlePluginRegistration = function(pluginFile, requestedCommands, cb) {
     // todo: if the router rejects the commands, we need to notify the plugin
-    console.log('registration:', pluginFile, requestedCommands);
+    // console.log('registration:', pluginFile, requestedCommands);
     router.register(pluginFile, requestedCommands);
     // cb(...todo...);
   };
