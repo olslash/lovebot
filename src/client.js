@@ -19,7 +19,7 @@ var IrcClient = function(config) {
   });
 
   self.client.addListener('message', function(from, to, message) {
-    console.log('%s => %s: %s', from, to, message);
+    // console.log('%s => %s: %s', from, to, message);
     // if(to === self.name) {
     //     console.log('Got private message from %s: %s', from, message);
     // }

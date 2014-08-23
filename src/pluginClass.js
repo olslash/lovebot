@@ -10,7 +10,7 @@ var Plugin = function(pluginPath) {
   this.process = null;
   this.pid = null;
   this.timeLoaded = null;
-  this.registeredCommands = null;
+  this.registeredCommands = {};
 };
 
 util.inherits(Plugin, emitter);

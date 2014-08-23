@@ -6,9 +6,12 @@ var path = require('path');
 var readFile = Promise.promisify(fs.readFile);
 var readDir = Promise.promisify(fs.readdir);
 
+var globalEmitter = require('./globalEmitter');
 var Router  = require('./router');
 var Client  = require('./client');
 var Plugin  = require('./pluginClass');
+
+var socketAdapter = require('./socketAdapter');
 
 var core = (function() {
   var running = false;
@@ -21,7 +24,6 @@ var core = (function() {
   var allPlugins = {};
 
   var init = function(configFile) {
-    console.log('init');
     if(running) return;
     running = true;
     
@@ -79,6 +81,7 @@ var core = (function() {
       filename: pluginFile,
       timeLoaded:plugin.timeLoaded,
       pid: plugin.pid
+      // allPlugins: allPlugins // fixme: why does this crash?
     });
   };
 
@@ -89,7 +92,8 @@ var core = (function() {
     }
 
     emitGlobal('unloadedPlugin', {
-      filename: pluginFile
+      filename: pluginFile,
+      allPlugins: allPlugins
     });
   };
 
@@ -116,7 +120,6 @@ var core = (function() {
   };
 
   var handlePluginMessage = function(pluginFile, messageObject) {
-    console.log('plugin replied', messageObject);
     // todo: pluginFile needed?
     router.routeOutgoing(messageObject);
   };
@@ -131,11 +134,21 @@ var core = (function() {
     irc.sendToChannel(to, message);
   };
 
-  var handlePluginRegistration = function(pluginFile, requestedCommands, cb) {
+  var handlePluginRegistration = function(pluginObject, requestedCommands, cb) {
     // todo: if the router rejects the commands, we need to notify the plugin
     // console.log('registration:', pluginFile, requestedCommands);
-    router.register(pluginFile, requestedCommands);
+    router.register(pluginObject, requestedCommands);
     // cb(...todo...);
+    // todo: put this in a callback only if the registation succeeds.
+    requestedCommands.forEach(function(command) {
+      pluginObject.registeredCommands[command] = true;
+    });
+
+    emitGlobal('pluginRegistration', {
+      filename: pluginObject.filename,
+      commands: requestedCommands
+    });
+    // end callback
   };
 
   var handlePluginExit = function(pluginFile, codeOrSignal) {
@@ -145,15 +158,23 @@ var core = (function() {
 
   var emitGlobal = function(type, data) {
     // for websocket/etc. adapter
-    process.emit(type, data);
+    globalEmitter.emit(type, data);
   };
 
   return {
     init: init,
+    get allPlugins() {
+      return allPlugins;
+    },
+    set allPlugins(value) {
+      return;
+    },
     scanPluginDir: scanPluginDir,
     loadPlugin: loadPlugin,
-    unloadPlugin: unloadPlugin
+    unloadPlugin: unloadPlugin,
+    running: running
   };
+
 })();
 
 if(process.env.NODE_ENV !== 'test') {

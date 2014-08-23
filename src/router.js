@@ -33,7 +33,10 @@ var Router = function() {
       }, this);
 
       return true;
-    } else return false;
+    } else {
+      console.log('failed to register', requestedCommands);
+      return false;
+    }
   };
 
   this.routeIncoming = function(from, to, message) {
