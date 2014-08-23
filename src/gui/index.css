@@ -1,0 +1,36 @@
+body {
+    background-color: #222;
+}
+.plugin-container {
+    font-family: 'Source Sans Pro', sans-serif; 
+    background-color: #333;
+    display: inline-block;
+    padding: .5rem;
+    border-radius: 5px;
+    margin-bottom: 4px;
+    border: 1px solid #888;
+}
+span {
+    color: #CCC;
+}
+.info-type {
+    font-weight: 600;
+    color: #EEE;
+}
+.plugin-name {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #EEE;
+    line-height: 3rem;
+    /*display: block;*/
+    /*background: #222;*/
+}
+
+.command-name {
+    background: #888;
+    color: #EEE;
+    padding: .1rem .5rem;
+    margin-right: 2px;
+    border-radius: 5px;
+    line-height: 2rem;
+}

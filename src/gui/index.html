@@ -1,0 +1,46 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<link rel="stylesheet" type="text/css" href="bower_components/foundation/css/foundation.css">
+		<link rel="stylesheet" type="text/css" href="index.css">
+		<script src="bower_components/foundation/js/vendor/modernizr.js"></script>
+		<link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,600' rel='stylesheet' type='text/css'>
+	</head>
+	<body ng-app="lovebot">
+		<div class="row">
+			
+			<div class="medium-5 columns" id="plugins" ng-controller="pluginlistCtrl">
+				<div ng-repeat="plugin in data.allPlugins" ng-include="pluginTemplate.url"></div>
+			</div>
+
+		<div class="medium-7 columns" id="recent-responses" ng-controller="recentCtrl">
+			
+		</div>
+		</div>
+		
+		<script src="https://cdn.socket.io/socket.io-1.0.6.js"></script>
+		<script src="bower_components/angular/angular.js"></script>
+		
+		<script src="app/app.js"></script>
+		<script src="services/socket_service.js"></script>
+		<script src="services/data_factory.js"></script>
+		<script src="controllers/pluginlist_controller.js"></script>
+		
+		<script src="bower_components/jquery/dist/jquery.min.js"></script>
+		<script src="bower_components/foundation/js/vendor/fastclick.js"></script>
+		<script src="bower_components/foundation/js/foundation.min.js"></script>
+		<script> $(document).foundation(); </script>
+	</body>
+</html>
+
+<script id="plugin.html" type="text/ng-template">
+	<div class="plugin-container">
+	{{plugin}}
+	    <span class="plugin-name">{{plugin.filename}}</span><br>
+	    <span class="info-type">PID:</span> <span class="info-text">{{plugin.pid}}</span><br>
+	    <span class="info-type">Loaded:</span> <span class="info-text">{{plugin.timeLoaded}}</span><br>
+	    <span class="command-name">Weather</span>
+	    <span class="command-name">Wea</span>
+	    <span class="command-name">We</span>
+	</div>
+</script>
