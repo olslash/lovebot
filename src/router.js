@@ -6,16 +6,8 @@ var emitter = require('events').EventEmitter;
 var util = require('util');
 
 var Router = function() {
-  this.incomingRoutes = {};
-  // holds the commands that plugins have registered, and corresponds them to 
-  // their respective plugin's mesage channel
 
-  // {
-  //   echo: function(message) {
-  //     // send to particular channel
-  //   }
-  // }
-  this.plugins = {};
+  this.incomingRoutes = {};
   this.messageIds = {};
 
   this.register = function(pluginObject, requestedCommands) {
@@ -27,8 +19,11 @@ var Router = function() {
     if(allCommandsAvailable) {
       requestedCommands.forEach(function(commandName) {
         console.log('registering', commandName);
-        this.incomingRoutes[commandName] = function(routingObject) {
-          pluginObject.process.send(routingObject);
+        this.incomingRoutes[commandName] = {
+         send: function(routingObject) {
+           pluginObject.process.send(routingObject);
+         }, 
+         owner: pluginObject
         };
       }, this);
 
@@ -37,6 +32,10 @@ var Router = function() {
       console.log('failed to register', requestedCommands);
       return false;
     }
+  };
+
+  this.unregister = function(pluginFile) {
+
   };
 
   this.routeIncoming = function(from, to, message) {
@@ -50,7 +49,7 @@ var Router = function() {
       .then(function(messageId) {
         this.messageIds[messageId] = to;
 
-        this.incomingRoutes[command]({
+        this.incomingRoutes[command].send({
           command: command,
           messageText: text,
           callerName: from,
@@ -71,10 +70,6 @@ var Router = function() {
     var targetChannel = this.messageIds[messageId];
     this.emit('message', targetChannel, messageObject.replyText);
     delete this.messageIds[messageId];
-  };
-
-  this.unregister = function(pluginFile) {
-
   };
 
   var generateMessageId = function() {
