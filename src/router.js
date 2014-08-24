@@ -23,7 +23,7 @@ var Router = function() {
          send: function(routingObject) {
            pluginObject.process.send(routingObject);
          }, 
-         owner: pluginObject
+         owner: pluginObject.filename
         };
       }, this);
 
@@ -35,7 +35,11 @@ var Router = function() {
   };
 
   this.unregister = function(pluginFile) {
-
+    this.incomingRoutes.forEach(function(commandName) {
+      if(this.incomingRoutes[commandName].owner === pluginFile) {
+        delete this.incomingRoutes[commandName];
+      }
+    }, this);
   };
 
   this.routeIncoming = function(from, to, message) {

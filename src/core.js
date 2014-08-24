@@ -87,6 +87,7 @@ var core = (function() {
 
   var unloadPlugin = function(pluginFile) {
     if(allPlugins.hasOwnProperty(pluginFile)) {
+      router.unregister(pluginFile);
       allPlugins[pluginFile].stop();
       delete allPlugins[pluginFile];
     }
