@@ -87,7 +87,7 @@ var core = (function() {
 
   var unloadPlugin = function(pluginFile) {
     if(allPlugins.hasOwnProperty(pluginFile)) {
-      allPlugins[pluginFile].unload();
+      allPlugins[pluginFile].stop();
       delete allPlugins[pluginFile];
     }
 
