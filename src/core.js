@@ -137,18 +137,16 @@ var core = (function() {
   var handlePluginRegistration = function(pluginObject, requestedCommands, cb) {
     // todo: if the router rejects the commands, we need to notify the plugin
     // console.log('registration:', pluginFile, requestedCommands);
-    router.register(pluginObject, requestedCommands);
-    // cb(...todo...);
-    // todo: put this in a callback only if the registation succeeds.
-    requestedCommands.forEach(function(command) {
-      pluginObject.registeredCommands[command] = true;
-    });
+    if(router.register(pluginObject, requestedCommands)) {
+      requestedCommands.forEach(function(command) {
+        pluginObject.registeredCommands[command] = true;
+      });
 
-    emitGlobal('pluginRegistration', {
-      filename: pluginObject.filename,
-      commands: requestedCommands
-    });
-    // end callback
+      emitGlobal('pluginRegistration', {
+        filename: pluginObject.filename,
+        commands: requestedCommands
+      });  
+    }
   };
 
   var handlePluginExit = function(pluginFile, codeOrSignal) {
