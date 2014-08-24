@@ -7,19 +7,19 @@ var util = require('util');
 
 var Router = function() {
 
-  this.incomingRoutes = {};
-  this.messageIds = {};
+  var incomingRoutes = {};
+  var messageIds = {};
 
   this.register = function(pluginObject, requestedCommands) {
     // Verify that all requested commands are available, otherwise reject
     var allCommandsAvailable = requestedCommands.every(function(commandName) {
-      return !this.incomingRoutes.hasOwnProperty(commandName);
+      return !incomingRoutes.hasOwnProperty(commandName);
     }, this);
 
     if(allCommandsAvailable) {
       requestedCommands.forEach(function(commandName) {
         console.log('registering', commandName);
-        this.incomingRoutes[commandName] = {
+        incomingRoutes[commandName] = {
          send: function(routingObject) {
            pluginObject.process.send(routingObject);
          }, 
@@ -35,9 +35,9 @@ var Router = function() {
   };
 
   this.unregister = function(pluginFile) {
-    this.incomingRoutes.forEach(function(commandName) {
-      if(this.incomingRoutes[commandName].owner === pluginFile) {
-        delete this.incomingRoutes[commandName];
+    incomingRoutes.forEach(function(commandName) {
+      if(incomingRoutes[commandName].owner === pluginFile) {
+        delete incomingRoutes[commandName];
       }
     }, this);
   };
@@ -47,13 +47,13 @@ var Router = function() {
     var command = splitMessage[1];
     var text = splitMessage[2];
 
-    if (this.incomingRoutes.hasOwnProperty(command)) {
+    if (incomingRoutes.hasOwnProperty(command)) {
       generateMessageId()
 
       .then(function(messageId) {
-        this.messageIds[messageId] = to;
+        messageIds[messageId] = to;
 
-        this.incomingRoutes[command].send({
+        incomingRoutes[command].send({
           command: command,
           messageText: text,
           callerName: from,
@@ -71,9 +71,9 @@ var Router = function() {
 
   this.routeOutgoing = function(messageObject) {
     var messageId = messageObject.messageId;
-    var targetChannel = this.messageIds[messageId];
+    var targetChannel = messageIds[messageId];
     this.emit('message', targetChannel, messageObject.replyText);
-    delete this.messageIds[messageId];
+    delete messageIds[messageId];
   };
 
   var generateMessageId = function() {
