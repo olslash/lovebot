@@ -18,11 +18,11 @@ process.on('message', function(message) {
     path: '/data/2.5/weather?' + q,
     // port: 80,
     // method: 'GET'
-  }, handleResponse.bind(null, message.messageId));
-  req.end()
+  }, handleResponse.bind(null, message));
+  req.end();
 });
 
-var handleResponse = function(messageId, res) {
+var handleResponse = function(message, res) {
   console.log('response', res);
   var response = '';
 
@@ -32,8 +32,8 @@ var handleResponse = function(messageId, res) {
 
   res.on('end', function() {
     process.send({
-      messageId: messageId,
-      replyText: response
+      messageId: message.messageId,
+      replyText: message.callerName + ':' + response
     });  
   });
 
