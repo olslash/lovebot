@@ -36,9 +36,9 @@ describe('Router', function() {
       process: {
         send: function(routingObject) {
           checkRecievedObject(routingObject);
-        },
-        filename: 'fakeplugin'
-      }
+        }
+      },
+      filename: 'fakeplugin'
     };
 
     router.register(fakePlugin, ['echo']);
@@ -61,9 +61,9 @@ describe('Router', function() {
         process: {
           send: function(routingObject) {
             forwardReceivedReply(routingObject);
-          },
-          filename: 'fakeplugin'
-        }
+          }
+        },
+        filename: 'fakeplugin'
       };
 
       var invalidReply = {
@@ -92,5 +92,32 @@ describe('Router', function() {
         expect(message).to.equal('123 hi mom');
         done();
       }
+  });
+
+  it('should unregister plugins', function(done) {
+    var failed = false;
+    var fakePlugin = {
+      process: {
+        send: function(routingObject) {
+          fail();
+        }
+      },
+      filename: 'fakeplugin'
+    };
+
+    function fail() {
+      failed = true;
+    }
+
+    router.register(fakePlugin, ['echo']);
+    router.unregister(fakePlugin.filename);
+
+    router.routeIncoming('from', 'to', 'echo 123 hi mom');
+    
+    setTimeout(function() {
+      expect(failed).to.be.false;
+      done();
+    }, 10);
+
   });
 });
