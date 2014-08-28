@@ -18,7 +18,7 @@ var Router = function() {
 
     if(allCommandsAvailable) {
       requestedCommands.forEach(function(commandName) {
-        console.log('registering', commandName);
+        console.log('router is registering', commandName);
         incomingRoutes[commandName] = {
          send: function(routingObject) {
            pluginObject.process.send(routingObject);
@@ -35,11 +35,12 @@ var Router = function() {
   };
 
   this.unregister = function(pluginFile) {
-    incomingRoutes.forEach(function(commandName) {
+    console.log('router is unregistering', pluginFile);
+    for(var commandName in incomingRoutes) {
       if(incomingRoutes[commandName].owner === pluginFile) {
         delete incomingRoutes[commandName];
       }
-    }, this);
+    }
   };
 
   this.routeIncoming = function(from, to, message) {
@@ -71,9 +72,11 @@ var Router = function() {
 
   this.routeOutgoing = function(messageObject) {
     var messageId = messageObject.messageId;
-    var targetChannel = messageIds[messageId];
-    this.emit('message', targetChannel, messageObject.replyText);
-    delete messageIds[messageId];
+    if(messageIds.hasOwnProperty(messageId)) {
+      var targetChannel = messageIds[messageId];
+      this.emit('message', targetChannel, messageObject.replyText);
+      delete messageIds[messageId];
+    }
   };
 
   var generateMessageId = function() {
