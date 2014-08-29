@@ -1,0 +1,7 @@
+{
+    "botName": "lovebot",
+    "pluginDir": "../test/testPlugins/",
+    "botNetwork": "",
+    "joinChannels": [],
+    "commandPrefixes": ["!", "."]
+}

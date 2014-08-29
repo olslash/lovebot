@@ -1,148 +1,84 @@
-// 'use strict';
+'use strict';
 
-// process.env.NODE_ENV = 'test';
+process.env.NODE_ENV = 'test';
 // var sinon = require('sinon');
-// var should = require('chai').should();
-// var rewire = require("rewire");
-// var botCore = rewire('../src/core.js');
+var should = require('chai').should();
+var expect = require('chai').expect;
+var rewire = require('rewire');
+var path = require('path');
 
-// describe('Core', function() {
-//   var fakeConfigJSON = ['{',
-//     '"botName": "lovebottesting",',
-//     '"pluginDir": "fakeplugins/",',
-//     '"botNetwork": "irc.fakechat.net",',
-//     '"joinChannels": ["#testchan1", "#testchan2"],',
-//     '"commandPrefixes": ["*", "&", "#"]',
-//     '}'
-//   ].join('\n');
+var botCore = rewire('../src/core.js');
+var globalEmitter = require('../src/globalEmitter');
 
-//   var revert = function() {}; // will be assiged in the tests.
+var fakePlugin;
+var FakeRouter;
+var FakeClient;
 
-//   beforeEach(function() {
-//     botCore.__set__('__dirname', 'test/src/');
+describe('Core', function() {
+  beforeEach(function() {
+    fakePlugin = {
+      process: {
+        send: function(routingObject) {}
+      },
+      filename: 'fakeplugin'
+    };
 
-//     // make sure the actual router and client aren't ever instantiated
-//     botCore.__set__('Router', function() {
-//       this.on = function() {};
-//     });
+    FakeRouter = function() {
+      this.routeIncoming = function() {};
+      this.routeOutgoing = function() {};
+      this.on = function() {};
+      this.register = function() {};
+      this.unregister = function() {};
+    };
 
-//     botCore.__set__('Client', function() {
-//       this.on = function() {};
-//     });
-//   });
+    FakeClient = function() {
+      this.sendToChannel = function() {};
+      this.on = function() {};
+    };
 
-//   afterEach(function() {
-//     revert();
-//     revert = function() {};
-//   });
+    var revert = botCore.__set__({
+      Router: FakeRouter,
+      Client: FakeClient
+    });
 
-//   describe('init', function() {
-//     it('should read the config file and instanciate a router and client with' +
-//       'the correct parameters', function() {
-//         var botName, botNetwork, botChannels;
+    var dirpath = path.join(__dirname, '..', 'test', 'testconfig.json');
+    botCore.__get__('core').init(String(dirpath));
+  });
 
-//         var FakeRouter = function(config) {
-//           botName = config.name;
-//         };
-//         FakeRouter.prototype.on = function() {};
+  it('should emit global events on plugin load/unload and router/irc messages', 
+    function() {
+      var loadedPluginEventEmitted;
+      var unloadedPluginEventEmitted;
+      var messageEventEmitted;
+      var pluginReplyEventEmitted;
 
-//         var FakeClient = function(config) {
-//           botNetwork = config.network;
-//           botChannels = config.channels;
-//         };
-//         FakeClient.prototype.on = function() {};
-        
-//         var fsMock = {
-//           readFile: function(path, encoding, cb) {
-//             cb(null, fakeConfigJSON);
-//           },
-//           readdir: function(path, cb) {
-//             cb(null, []);
-//           }
-//         };
-        
-//         revert = botCore.__set__({
-//           fs: fsMock,
-//           Router: FakeRouter,
-//           Client: FakeClient
-//         });
 
-//         botCore.__get__('init')();
+      globalEmitter.on('loadedPlugin', function(message) {
+        loadedPluginEventEmitted = message;
+      });
 
-//         botName.should.equal('lovebottesting');
-//         botNetwork.should.equal('irc.fakechat.net');
-//         botChannels.should.eql(['#testchan1', '#testchan2']);
-//       });
+      globalEmitter.on('unloadedPlugin', function(message) {
+        unloadedPluginEventEmitted = message;
+      });
 
-//    it('should read the plugin directory and call loadPlugin for each plugin', 
-//       function() {
-//         var loadedPlugins = [];
+      globalEmitter.on('message', function(message) {
+        messageEventEmitted = message;
+      });
 
-//         var fsMock = {
-//           readdir: function(path, cb) {
-//             cb(null, ['test1.js', 'test2.js', 'test3.js']);
-//           }, 
-//           readFile: function(path, encoding, cb) {
-//             cb(null, fakeConfigJSON);
-//           }
-//         };
+      globalEmitter.on('pluginReply', function(message) {
+        pluginReplyEventEmitted = message;
+      });
 
-//         revert = botCore.__set__({
-//           fs: fsMock,
-//           // cp: cpMock,
-//           loadPlugin: function(dir, pluginFile) {
-//             dir.should.equal('test/src/fakeplugins/');
-//             loadedPlugins.push(pluginFile);
-//           }
-//         });
-
-//         botCore.__get__('init')();
-//         loadedPlugins.should.include('test1.js', 'test2.js', 'test3.js');
-//     });
-
-//     it('should pass messages from irc to router, when recieved with a ' + 
-//     'registered prefix', function() {
-//       var fsMock = {
-//         readdir: function(path, cb) {
-//           cb(null, []);
-//         }, 
-//         readFile: function(path, encoding, cb) {
-//           cb(null, fakeConfigJSON);
-//         }
-//       };
-//       var routeIncomingCall = [];
-//       var FakeRouter = function() {};
-//       FakeRouter.prototype.on = function() {};
-//       FakeRouter.prototype.routeIncoming = function(from, to, message) {
-//         routeIncomingCall = [from, to, message];
-//       };
-
-//       var FakeClient = function() {};
-
-//       revert = botCore.__set__({
-//         fs: fsMock,
-//         Router: FakeRouter
-//       });
-
-//       // test registered prefixes
-//       var commandPrefixes = JSON.parse(fakeConfigJSON).commandPrefixes;
-//       for(var i = 0; i < commandPrefixes.length; i++) {
-//         FakeClient.prototype.on = function(trigger, cb) {
-//           cb('ol', '#testchan1', commandPrefixes[i] + 'is a real prefix');
-//         };
-//         botCore.__set__('Client', FakeClient);
-//         botCore.__get__('init')();
-//         routeIncomingCall.should.eql(['ol', '#testchan1', 'is a real prefix']);
-//         routeIncomingCall = [];
-//       }
+      botCore.__get__('core').loadPlugin('/../test/testPlugins/plugin1.js');
       
-//       // should ignore unregistered prefixes
-//       FakeClient.prototype.on = function(trigger, cb) {
-//         cb('ol', '#testchan1', '^is not a real prefix');
-//       };
-//       botCore.__set__('Client', FakeClient);
-//       botCore.__get__('init')();
-//       routeIncomingCall.should.eql([]);
-//     });
-//   });
-// });
+      expect(loadedPluginEventEmitted.filename).to.equal('/../test/testPlugins/plugin1.js');
+      var pluginLoadedYear = new Date(loadedPluginEventEmitted.timeLoaded).getUTCFullYear();
+      expect(pluginLoadedYear).to.equal(new Date().getUTCFullYear());
+      expect(Number(loadedPluginEventEmitted.pid)).gt(0);
+
+
+
+      // revert();
+  });
+
+});
